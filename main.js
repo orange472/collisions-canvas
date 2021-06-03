@@ -50,14 +50,12 @@ function createCircles() {
     var circle2 = new Circle(200, 200, 20, "red", "2");
     circle2.draw(ctx);
 
-    function updateCircles() {
+    startButton.onclick = function updateCircles() {
         requestAnimationFrame(updateCircles);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         circle1.update();
         circle2.update();
     }
-
-    updateCircles();
 }
 
 createCircles();
