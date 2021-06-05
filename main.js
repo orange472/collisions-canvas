@@ -4,9 +4,11 @@ const startButton = document.getElementById("startButton");
 const numCirclesSlider = document.getElementById("numCirclesSlider");
 
 let circles = [];
+let circles1 = [];
+let circles2 = [];
 
 class Circle {
-    constructor(xpos, ypos, mass, radius, color, xvel, yvel, index) {
+    constructor(xpos, ypos, mass, radius, color, xvel, yvel, type, index) {
         this.xpos = xpos;
         this.ypos = ypos;
         this.mass = mass;
@@ -14,6 +16,7 @@ class Circle {
         this.color = color;
         this.xvel = xvel;
         this.yvel = yvel;
+        this.type = type;
         this.index = index;
     }
 
@@ -84,29 +87,78 @@ class Circle {
 
 function createCircles() {
     circles = [];
+    circles1 = [];
+    circles2 = [];
 
     const numCircles = numCirclesSlider.value;
+    var a = 0;
+    var b = 0;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    for(var n = 0; n < numCircles; n++) {
-        var radius = Math.floor(Math.random() * 26) + 5; 
+    while(circles1.length < numCircles) {
+        var radius = Math.floor(Math.random() * 4) + 4; 
         var mass = Math.pow(radius, 2) / 100;
-        var x = Math.random() * (canvas.width - radius) + radius;
-        var y = Math.random() * (canvas.height - radius) + radius;
-        var color = "black";
+        var x = Math.random() * (canvas.width - 2 * radius) + radius;
+        var y = Math.random() * (canvas.height - 2 * radius) + radius;
         var dx = (Math.random() * 4 + 0.5);
         var dy = (Math.random() * 4 + 0.5);
+        var color = "#3278cf";
+        var overlapping = false;
 
-        circles[n] = (new Circle(x, y, mass, radius, color, dx, dy, n));
-        circles[n].draw(ctx);
+        for(var i = 0; i < circles1.length; i++) {
+            if(!(a == i)) {
+                if(Math.sqrt(Math.pow(circles1[i].xpos - x, 2) + Math.pow(circles1[i].ypos - y, 2)) < circles1[i].radius + radius) {
+                    overlapping = true;
+                }
+            }
+        }
 
+        if(!overlapping) {
+            circles1[a] = new Circle(x, y, mass, radius, color, dx, dy, "circle1", a);
+            circles1[a].draw(ctx);
+            a++;
+        }
     }
+
+    while(circles2.length < numCircles) {
+        var radius = Math.floor(Math.random() * 4) + 4; 
+        var mass = Math.pow(radius, 2) / 100;
+        var x = Math.random() * (canvas.width - 2 * radius) + radius;
+        var y = Math.random() * (canvas.height - 2 * radius) + radius;
+        var dx = (Math.random() * 4 + 0.5);
+        var dy = (Math.random() * 4 + 0.5);
+        var color = "#06254d";
+        var overlapping = false;
+
+        for(var i = 0; i < circles1.length; i++) {
+            if(Math.sqrt(Math.pow(circles1[i].xpos - x, 2) + Math.pow(circles1[i].ypos - y, 2)) < circles1[i].radius + radius) {
+                overlapping = true;
+            }
+        }
+
+        for(var i = 0; i < circles2.length; i++) {
+            if(!(b == i)) {
+                if(Math.sqrt(Math.pow(circles2[i].xpos - x, 2) + Math.pow(circles2[i].ypos - y, 2)) < circles2[i].radius + radius) {
+                    overlapping = true;
+                }
+            }
+        }
+
+        if(!overlapping) {
+            var yeah = b + a;
+            circles2[b] = new Circle(x, y, mass, radius, color, dx, dy, "circle2", yeah);
+            circles2[b].draw(ctx);
+            b++;
+        }
+    }
+
+    circles.push(...circles1, ...circles2);
 }
 
 function updateCircles() {
-    ctx.fillText(circles.length, 100, 100);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillText(circles.length, 100, 100);
 
     for(var i = 0; i < circles.length; i++) {
         circles[i].updatePosition();
@@ -120,5 +172,6 @@ numCirclesSlider.onchange = function() {
 }
 
 startButton.onclick = function() {
+    ctx.fillText(circles, 100, 100);
     updateCircles();
 }
