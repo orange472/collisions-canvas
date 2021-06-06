@@ -2,7 +2,8 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const halfWidth = canvas.width / 2;
 const startButton = document.getElementById("startButton");
-const numCirclesSlider = document.getElementById("numCirclesSlider");
+const numCircle1Slider = document.getElementById("numCircle1Slider");
+const numCircle2Slider = document.getElementById("numCircle2Slider");
 
 let circles = [];
 let circles1 = [];
@@ -113,19 +114,20 @@ function createCircles() {
     circles1 = [];
     circles2 = [];
 
-    const numCircles = numCirclesSlider.value;
+    const numCircle1 = numCircle1Slider.value;
+    const numCircle2 = numCircle2Slider.value;
     var a = 0;
     var b = 0;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    while(circles1.length < numCircles) {
+    while(circles1.length < numCircle1) {
         var radius = 4; 
         var mass = Math.pow(radius, 2) / 100;
         var x = Math.random() * (canvas.width - 2 * radius) + radius;
         var y = Math.random() * (canvas.height - 2 * radius) + radius;
-        var dx = (Math.random() * 0.5 + 0.5);
-        var dy = (Math.random() * 0.5 + 0.5);
+        var dx = (Math.random() * 1 - 0.5);
+        var dy = (Math.random() * 1 - 0.5);
         var color = "#3278cf";
         var overlapping = false;
 
@@ -137,8 +139,15 @@ function createCircles() {
             }
         }
 
-        if(x + radius == halfWidth) {
-            overlapping = true;
+        if(x < halfWidth) {
+            if(x + radius > halfWidth) {
+                overlapping = true;
+            }
+        }
+        else if(x > halfWidth) {
+            if(x - radius < halfWidth) {
+                overlapping = true;
+            }
         }
 
         if(!overlapping) {
@@ -148,13 +157,13 @@ function createCircles() {
         }
     }
 
-    while(circles2.length < numCircles) {
+    while(circles2.length < numCircle2) {
         var radius = 9; 
         var mass = Math.pow(radius, 2) / 100;
         var x = Math.random() * (canvas.width - 2 * radius) + radius;
         var y = Math.random() * (canvas.height - 2 * radius) + radius;
-        var dx = (Math.random() * 0.5 + 0.5);
-        var dy = (Math.random() * 0.5 + 0.5);
+        var dx = (Math.random() * 1 - 0.5);
+        var dy = (Math.random() * 1 - 0.5);
         var color = "#06254d";
         var overlapping = false;
 
@@ -176,9 +185,20 @@ function createCircles() {
             overlapping = true;
         }
 
+        if(x < halfWidth) {//could just make this a function since its used twice, do it later
+            if(x + radius > halfWidth) {
+                overlapping = true;
+            }
+        }
+        else if(x > halfWidth) {
+            if(x - radius < halfWidth) {
+                overlapping = true;
+            }
+        }
+
         if(!overlapping) {
-            var yeah = b + a;
-            circles2[b] = new Circle(x, y, mass, radius, color, dx, dy, "circle2", yeah);
+            var indexCon = b + a;
+            circles2[b] = new Circle(x, y, mass, radius, color, dx, dy, "circle2", indexCon);
             circles2[b].draw(ctx);
             b++;
         }
@@ -206,7 +226,11 @@ function updateCircles() {
     requestAnimationFrame(updateCircles);
 }
 
-numCirclesSlider.onchange = function() {
+numCircle1Slider.onchange = function() {
+    createCircles();
+}
+
+numCircle2Slider.onchange = function() {
     createCircles();
 }
 
