@@ -1,5 +1,6 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+const halfWidth = canvas.width / 2;
 const startButton = document.getElementById("startButton");
 const numCirclesSlider = document.getElementById("numCirclesSlider");
 
@@ -61,6 +62,19 @@ class Circle {
             this.yvel = -this.yvel;
         }
 
+        if(this.index < circles1.length) {
+            if(this.xpos < halfWidth) {
+                if(this.xpos + this.radius + this.xvel >= halfWidth) {
+                    this.xvel = -this.xvel;
+                }
+            }
+            else if(this.xpos > halfWidth) {
+                if(this.xpos - this.radius + this.xvel <= halfWidth) {
+                    this.xvel = -this.xvel;
+                }
+            }
+        }
+
         for(var j = 0; j < circles.length; j++) {
             if(!(this.index == j)) {
                 if(Math.sqrt(Math.pow(this.xpos - circles[j].xpos + this.xvel - circles[j].xvel, 2) + Math.pow(this.ypos - circles[j].ypos + this.yvel - circles[j].yvel, 2)) < (this.radius + circles[j].radius)) {
@@ -85,6 +99,15 @@ class Circle {
     }
 }
 
+/**function getRandomColor() {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}*/
+
 function createCircles() {
     circles = [];
     circles1 = [];
@@ -97,12 +120,12 @@ function createCircles() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     while(circles1.length < numCircles) {
-        var radius = Math.floor(Math.random() * 4) + 4; 
+        var radius = 4; 
         var mass = Math.pow(radius, 2) / 100;
         var x = Math.random() * (canvas.width - 2 * radius) + radius;
         var y = Math.random() * (canvas.height - 2 * radius) + radius;
-        var dx = (Math.random() * 4 + 0.5);
-        var dy = (Math.random() * 4 + 0.5);
+        var dx = (Math.random() * 0.5 + 0.5);
+        var dy = (Math.random() * 0.5 + 0.5);
         var color = "#3278cf";
         var overlapping = false;
 
@@ -114,6 +137,10 @@ function createCircles() {
             }
         }
 
+        if(x + radius == halfWidth) {
+            overlapping = true;
+        }
+
         if(!overlapping) {
             circles1[a] = new Circle(x, y, mass, radius, color, dx, dy, "circle1", a);
             circles1[a].draw(ctx);
@@ -122,12 +149,12 @@ function createCircles() {
     }
 
     while(circles2.length < numCircles) {
-        var radius = Math.floor(Math.random() * 4) + 4; 
+        var radius = 9; 
         var mass = Math.pow(radius, 2) / 100;
         var x = Math.random() * (canvas.width - 2 * radius) + radius;
         var y = Math.random() * (canvas.height - 2 * radius) + radius;
-        var dx = (Math.random() * 4 + 0.5);
-        var dy = (Math.random() * 4 + 0.5);
+        var dx = (Math.random() * 0.5 + 0.5);
+        var dy = (Math.random() * 0.5 + 0.5);
         var color = "#06254d";
         var overlapping = false;
 
@@ -145,6 +172,10 @@ function createCircles() {
             }
         }
 
+        if(x + radius == halfWidth) {
+            overlapping = true;
+        }
+
         if(!overlapping) {
             var yeah = b + a;
             circles2[b] = new Circle(x, y, mass, radius, color, dx, dy, "circle2", yeah);
@@ -158,6 +189,14 @@ function createCircles() {
 
 function updateCircles() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.lineWidth = 1;
+    ctx.moveTo(halfWidth, 0);
+    ctx.lineTo(halfWidth, canvas.height);
+    ctx.closePath();
+    ctx.strokeStyle = "#000000";
+    ctx.stroke();
+
     ctx.fillText(circles.length, 100, 100);
 
     for(var i = 0; i < circles.length; i++) {
