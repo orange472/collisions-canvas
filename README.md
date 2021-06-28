@@ -1,2 +1,2 @@
 # collision
-Simulation for colliding molecules/circles
+Simulation for 2-D molecule/circle collisions
