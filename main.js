@@ -12,7 +12,8 @@ let circles1 = [];
 let circles2 = [];
 
 var start = false;
-var chain = 0;
+var chain1 = 0;
+var chain2 = 0;
 
 class Circle {
     constructor(xpos, ypos, mass, radius, color, xvel, yvel, type, index) {
@@ -33,7 +34,7 @@ class Circle {
         ctx.lineWidth = 1;
         ctx.arc(this.xpos, this.ypos, this.radius, 0, 2 * Math.PI, false);
         ctx.stroke();
-        //ctx.fillText(this.index, this.xpos, this.ypos);
+        ctx.fillText(this.index, this.xpos, this.ypos);
         ctx.closePath();
     }
 
@@ -42,6 +43,8 @@ class Circle {
         let num2 = (v1x - v2x) * (x1x - x2x) + (v1y - v2y) * (x1y - x2y);
         let num2_ = (Math.pow(x1x - x2x, 2) + Math.pow(x1y - x2y, 2));
         let num3 = (x1x - x2x);
+
+        console.log(num2_);
 
         return v1x - num1 * (num2 / num2_) * num3;
     }
@@ -52,6 +55,8 @@ class Circle {
         let num2_ = (Math.pow(x1x - x2x, 2) + Math.pow(x1y - x2y, 2));
         let num3 = (x1y - x2y);
 
+        console.log(num2_);
+
         return v1y - num1 * (num2 / num2_) * num3;
     }
 
@@ -60,6 +65,8 @@ class Circle {
         let num2 = (v2x - v1x) * (x2x - x1x) + (v2y - v1y) * (x2y - x1y);
         let num2_ = Math.pow(x2x - x1x, 2) + Math.pow(x2y - x1y, 2);
         let num3 = (x2x - x1x);
+
+        console.log(num2_);
 
         return v2x - num1 * (num2 / num2_) * num3;
     }
@@ -70,11 +77,13 @@ class Circle {
         let num2_ = Math.pow(x2x - x1x, 2) + Math.pow(x2y - x1y, 2);
         let num3 = (x2y - x1y);
 
+        console.log(num2_);
+
         return v2y - num1 * (num2 / num2_) * num3;
     }
 
     updateVelocity(m1, m2, v1, v2) {
-        /**Formula if each mass keeps their own kinetic energy **/
+        /**Formula for 1-D collisions / if each mass keeps their own kinetic energy **/
         var v = 0;
 
         var known_KE = 0.5 * (m1 * Math.pow(v1, 2) + m2 * Math.pow(v2, 2));
@@ -96,12 +105,31 @@ class Circle {
 
     updateVelocities(circle1, circle2) {
         /** Corresponding code for the 2-D collisions **/
-        circle1.xvel = circle1.updatev1x(circle1.mass, circle2.mass, circle1.xvel, circle1.yvel, circle2.xvel, circle2.yvel, circle1.xpos, circle1.ypos, circle2.xpos, circle2.ypos);
-        circle1.yvel = circle1.updatev1y(circle1.mass, circle2.mass, circle1.xvel, circle1.yvel, circle2.xvel, circle2.yvel, circle1.xpos, circle1.ypos, circle2.xpos, circle2.ypos);
-        circle2.xvel = circle1.updatev2x(circle1.mass, circle2.mass, circle1.xvel, circle1.yvel, circle2.xvel, circle2.yvel, circle1.xpos, circle1.ypos, circle2.xpos, circle2.ypos);
-        circle2.yvel = circle1.updatev2y(circle1.mass, circle2.mass, circle1.xvel, circle1.yvel, circle2.xvel, circle2.yvel, circle1.xpos, circle1.ypos, circle2.xpos, circle2.ypos);
+
+        var KE1x = 0.5 * circle1.mass * Math.pow(circle1.xvel, 2);
+        var KE1y = 0.5 * circle1.mass * Math.pow(circle1.yvel, 2);
+        var KE2x = 0.5 * circle2.mass * Math.pow(circle2.xvel, 2);
+        var KE2y = 0.5 * circle2.mass * Math.pow(circle2.yvel, 2);
+        var total_KE = KE1x + KE1y + KE2x + KE2y;
+        console.log("KE BEFORE for " + circle1.index + " and " + circle2.index + " collision: " + total_KE);
         
-       
+        var circle1tempxvel = circle1.updatev1x(circle1.mass, circle2.mass, circle1.xvel, circle1.yvel, circle2.xvel, circle2.yvel, circle1.xpos, circle1.ypos, circle2.xpos, circle2.ypos);
+        var circle1tempyvel = circle1.updatev1y(circle1.mass, circle2.mass, circle1.xvel, circle1.yvel, circle2.xvel, circle2.yvel, circle1.xpos, circle1.ypos, circle2.xpos, circle2.ypos);
+        var circle2tempxvel = circle1.updatev2x(circle1.mass, circle2.mass, circle1.xvel, circle1.yvel, circle2.xvel, circle2.yvel, circle1.xpos, circle1.ypos, circle2.xpos, circle2.ypos);
+        var circle2tempyvel = circle1.updatev2y(circle1.mass, circle2.mass, circle1.xvel, circle1.yvel, circle2.xvel, circle2.yvel, circle1.xpos, circle1.ypos, circle2.xpos, circle2.ypos);
+        
+        var KE1x = 0.5 * circle1.mass * Math.pow(circle1.xvel, 2);
+        var KE1y = 0.5 * circle1.mass * Math.pow(circle1.yvel, 2);
+        var KE2x = 0.5 * circle2.mass * Math.pow(circle2.xvel, 2);
+        var KE2y = 0.5 * circle2.mass * Math.pow(circle2.yvel, 2);
+        var total_KE = KE1x + KE1y + KE2x + KE2y;
+        console.log("KE AFTER for " + circle1.index + " and " + circle2.index + " collision: " + total_KE);
+
+        circle1.xvel = circle1tempxvel;
+        circle1.yvel = circle1tempyvel;
+        circle2.xvel = circle2tempxvel;
+        circle2.yvel = circle2tempyvel;
+
         /**Corresponding code for the 1-D collisions / updateVelocity() function **
         var tempX = circle1.xvel;
         var tempY = circle1.yvel;
@@ -146,8 +174,13 @@ class Circle {
     willChainCollide(circle1, circle2) { //willChainCollide() checks if circle1 will collide with OTHER circles after it has collided with circle2
         for(var i = 0; i < circles.length; i++) {
             if(circle1.index != i && circle2.index != i) {
-                if(circle1.willCollide(circle1, circles[i]) && chain < 50) {
-                    circles[i].updateCollisionWithObj();
+                if(circle1.willCollide(circle1, circles[i]) && chain1 < 20) {
+                    chain1++;
+                    circle1.updateCollisionWithObj();
+                }
+                if(circle2.willCollide(circle2, circles[i]) && chain2 < 20) {
+                    chain2++;
+                    circle2.updateCollisionWithObj();
                 }
             }
         }
@@ -174,8 +207,8 @@ class Circle {
             var vel1Ratio = circle1.xvel / circle1.yvel;
             var vel2Ratio = circle2.xvel / circle2.yvel;
 
-            console.log(xpos1 + "/" + ypos1 + "/" + xpos2 + "/" + ypos2);
-            console.log(circle1.xvel + "/" + circle1.yvel + "/" + circle2.xvel + "/" + circle2.yvel);
+            //console.log(xpos1 + "/" + ypos1 + "/" + xpos2 + "/" + ypos2);
+            //console.log(circle1.xvel + "/" + circle1.yvel + "/" + circle2.xvel + "/" + circle2.yvel);
             
             var a = Math.pow(vel2Ratio, 2) * Math.pow(xRatio - 1, 2) + Math.pow(yRatio - 1, 2);
             var b = 2 * (ypos1 - ypos2) * (yRatio - 1) + 2 * (xpos1 - xpos2) * (vel2Ratio) * (xRatio - 1);
@@ -186,29 +219,22 @@ class Circle {
             var v1y = v2y * yRatio;
             var v1x = v1y * vel1Ratio;
 
-            /**console.log("v1x: " + v1x);
-            console.log("v1y: " + v1y);
-            console.log("v2x: " + v2x);
-            console.log("v2y: " + v2y);
-            **/
-
             if(Math.pow(circle1.xvel + circle1.yvel, 2) < Math.pow(v1x + v1y, 2)) {
                 v2y = (-b + Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
                 v2x = v2y * vel2Ratio;
                 v1y = v2y * yRatio;
                 v1x = v1y * vel1Ratio;
-                
-                /**console.log("v1x: " + v1x);
-                console.log("v1y: " + v1y);
-                console.log("v2x: " + v2x);
-                console.log("v2y: " + v2y);
-                **/
             }
+
+            /**console.log("v1x: " + v1x +"/v1y: " + v1y + "/v2x: " + v2x + "/v2y: " + v2y);**/
 
             circle1.xpos += v1x;
             circle1.ypos += v1y;
             circle2.xpos += v2x;
             circle2.ypos += v2y;
+
+            circle1.draw(ctx);
+            circle2.draw(ctx);
         }
     }
 
@@ -219,15 +245,11 @@ class Circle {
                     if((this.xvel - circles[j].xvel) * (this.xpos - circles[j].xpos) + (this.yvel - circles[j].yvel) * (this.ypos - circles[j].ypos) < 0) {
                         this.updateUntilCollided(this, circles[j]);
                         this.updateVelocities(this, circles[j]);
-
+                        this.willChainCollide(this, circles[j]);
                         /**checks for collisions afterwards (for example, a circle could be pushed into another circle that's already been looped through) 
                          * if there are extra collisions, then this function will be run again to calculate velocities of affected circles
-                         * FOR TOMORROW: when willCollide() runs again, it needs to use new positions, i.g. create temporary future positions
+                         * Maybe? when willCollide() runs again, it needs to use new positions, i.g. create temporary future positions
                         */
-                        chain++;
-
-                        this.willChainCollide(this, circles[j]);
-                        this.willChainCollide(circles[j], this);
                     }
                 }
             }
@@ -238,7 +260,8 @@ class Circle {
         this.xpos += this.xvel;
         this.ypos += this.yvel;
         
-        chain = 0;
+        chain1 = 0;
+        chain2 = 0;
     }
 }
 
@@ -263,7 +286,7 @@ function createCircles() {
 
     while(circles1.length < numCircle1) {
         var radius = 12; 
-        var mass = Math.pow(radius, 3) / 100; 
+        var mass = Math.pow(radius, 3) / 1000; 
         var x = Math.random() * (canvas.width - 2 * radius) + radius;
         var y = Math.random() * (canvas.height - 2 * radius) + radius;
         var dx = (Math.random() * 1 - 0.5);
@@ -301,7 +324,7 @@ function createCircles() {
 
     while(circles2.length < numCircle2) {
         var radius = 6; 
-        var mass = Math.pow(radius, 3) / 100;
+        var mass = Math.pow(radius, 3) / 1000;
         var x = Math.random() * (canvas.width - 2 * radius) + radius;
         var y = Math.random() * (canvas.height - 2 * radius) + radius;
         var dx = (Math.random() * 2 - 1);
@@ -438,11 +461,13 @@ RightCircle2Slider.onchange = function() {
 
 startButton.onclick = function() {
     start = !start;
+
     if(start) {
         startButton.innerText = "Pause";
     }
     else {
         startButton.innerText = "Start";
     }
+
     updateCircles();
 }
