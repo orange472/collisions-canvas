@@ -1,90 +1,642 @@
-<style> /** Styling **/
-        @import url("https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto&display=swap");
+<html>
+    <head>
+        <div class='canvas-container'>
+            <canvas 
+                id="canvas" 
+                width="600" 
+                height="600"
+            ></canvas>
+        </div>
+    </head>
 
-        #canvas {
-            background: radial-gradient(#f3f3f3, #f9fbff);
-            border-radius: 2px;
-            border: 3px solid #333333;
-        }
+    <body>
+        <div class='controls-container'>
+            <div>
+                <label>Solute (left side)</label><br/>
+                <input 
+                    id="left-circle1-slider" 
+                    class="slider" 
+                    type="range" 
+                    min = "0" 
+                    max = "20"
+                />
+                <br/>
+                <label>Solvent (left side)</label><br/>
+                <input 
+                    id="left-circle2-slider" 
+                    class="slider" 
+                    type="range" 
+                    min = "0" 
+                    max = "100"
+                />
+            </div>
 
-        .controls-container {
-            max-width: 600px;
-            padding-bottom: 15px;
-            margin: 10px 0px 10px 2px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-bottom: solid 1px black;
-        }
+            <button 
+                id="start-button" 
+                type="button" 
+            >
+                Start
+            </button>
 
-        input[type="range"] {
-            -webkit-appearance: none;
-            height: 8px;
-            width: 175px;
-            margin: 10px 0;
-            background: linear-gradient(#c4c0b3, #ebe5d5);
-            border-radius: 3px;
-        }
+            <div>
+                <label>Solute (right side)</label><br/>
+                <input
+                    id="right-circle1-slider"
+                    class="slider"
+                    type="range"
+                    min = "0"
+                    max = "20"
+                />
+                <br />
+                <label>Solvent (right side)</label><br/>
+                <input
+                    id="right-circle2-slider"
+                    class="slider"
+                    type="range"
+                    min = "0"
+                    max = "100"
+                />
+            </div>
+        </div>
 
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 18px;
-            width: 18px;
-            background-color: #f16012;
-            border-radius: 50%;
-            transition: 0.2s ease;
-        }
+        <div id='chart-container' style="width: 600px;"></div>
 
-        input[type="range"]::-webkit-slider-thumb:hover {
-            -webkit-appearance: none;
-            height: 24px;
-            width: 24px;
-            background-color: #f17b3b;
-            cursor: pointer;
-            transition: 0.2s ease;
-        }
+        <script src="https://canvasjs.com/assets/script/canvasjs.min.js">
+        </script>
 
-        input[type="range"]::-webkit-slider-thumb:active {
-            background-color: #ca4f0c;
-            cursor: pointer;
-        }
+        <script> //script for updating main canvas
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+            const startButton = document.getElementById("start-button");
+            const LeftCircle1Slider = document.getElementById("left-circle1-slider");
+            const LeftCircle2Slider = document.getElementById("left-circle2-slider");
+            const RightCircle1Slider = document.getElementById("right-circle1-slider");
+            const RightCircle2Slider = document.getElementById("right-circle2-slider");
 
-        #graph {
-            border: solid 1px black;
-        }
+            let circles = [];
+            let circles1 = [];
+            let circles2 = [];
 
-        label {
-            font-family: "Open Sans", sans-serif;
-        }
+            ctx.font = '14px Roboto, sans-serif';
 
-        .sliders-container {
-            max-width: 600px;
-            max-height: fit-content;
-            display: flex;
-        }
+            const halfWidth = canvas.width / 2;
+            var start = false;
+            var chain1 = 0;
+            var chain2 = 0;
+            var concentrationL = 0;
+            var concentrationR = 0;
 
-        #start-button {
-            height: 80px;
-            width: 120px;
-            margin: 0px auto;
-            background-color: #db5812;
-            font-family: "Roboto", sans-serif;
-            font-size: 24px;
-            color: white;
-            border-radius: 3px;
-            border: none;
-            cursor: pointer;
-            transition: 0.2s ease;
-        }
+            class Circle {
+                constructor(xpos, ypos, mass, radius, color, xvel, yvel, index) {
+                    this.xpos = xpos;
+                    this.ypos = ypos;
+                    this.mass = mass;
+                    this.radius = radius;
+                    this.color = color;
+                    this.xvel = xvel;
+                    this.yvel = yvel;
+                    this.index = index;
+                }
 
-        #start-button:hover {
-            background-color: #ec8249;
-            cursor: pointer;
-            transition: 0.2s ease;
-        }
+                draw(ctx) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 1.5;
+                    ctx.arc(this.xpos, this.ypos, this.radius, 0, 2 * Math.PI, false);
+                    ctx.stroke();
+                    ctx.closePath();
+                }
 
-        #start-button:active {
-            background-color: #bb4303;
-            transition: 0.1s ease;
-        }
-    </style>
+                updatev1x(m1, m2, v1x, v1y, v2x, v2y, x1x, x1y, x2x, x2y) {
+                    let num1 = (2 * m2) / (m1 + m2);
+                    let num2 = (v1x - v2x) * (x1x - x2x) + (v1y - v2y) * (x1y - x2y);
+                    let num2_ = Math.pow(x1x - x2x, 2) + Math.pow(x1y - x2y, 2);
+                    let num3 = x1x - x2x;
+
+                    return v1x - num1 * (num2 / num2_) * num3;
+                }
+
+                updatev1y(m1, m2, v1x, v1y, v2x, v2y, x1x, x1y, x2x, x2y) {
+                    let num1 = (2 * m2) / (m1 + m2);
+                    let num2 = (v1x - v2x) * (x1x - x2x) + (v1y - v2y) * (x1y - x2y);
+                    let num2_ = Math.pow(x1x - x2x, 2) + Math.pow(x1y - x2y, 2);
+                    let num3 = x1y - x2y;
+
+                    return v1y - num1 * (num2 / num2_) * num3;
+                }
+
+                updatev2x(m1, m2, v1x, v1y, v2x, v2y, x1x, x1y, x2x, x2y) {
+                    let num1 = (2 * m1) / (m1 + m2);
+                    let num2 = (v2x - v1x) * (x2x - x1x) + (v2y - v1y) * (x2y - x1y);
+                    let num2_ = Math.pow(x2x - x1x, 2) + Math.pow(x2y - x1y, 2);
+                    let num3 = x2x - x1x;
+
+                    return v2x - num1 * (num2 / num2_) * num3;
+                }
+
+                updatev2y(m1, m2, v1x, v1y, v2x, v2y, x1x, x1y, x2x, x2y) {
+                    let num1 = (2 * m1) / (m1 + m2);
+                    let num2 = (v2x - v1x) * (x2x - x1x) + (v2y - v1y) * (x2y - x1y);
+                    let num2_ = Math.pow(x2x - x1x, 2) + Math.pow(x2y - x1y, 2);
+                    let num3 = x2y - x1y;
+
+                    return v2y - num1 * (num2 / num2_) * num3;
+                }
+
+                updateVelocities(circle1, circle2) {
+                    /** Corresponding code for the 2-D collisions **/
+                    
+                    var tempv1x = circle1.updatev1x(circle1.mass, circle2.mass, circle1.xvel, circle1.yvel, circle2.xvel, circle2.yvel, circle1.xpos, circle1.ypos, circle2.xpos, circle2.ypos);
+                    var tempv1y = circle1.updatev1y(circle1.mass, circle2.mass, circle1.xvel, circle1.yvel, circle2.xvel, circle2.yvel, circle1.xpos, circle1.ypos, circle2.xpos, circle2.ypos);
+                    var tempv2x = circle1.updatev2x(circle1.mass, circle2.mass, circle1.xvel, circle1.yvel, circle2.xvel, circle2.yvel, circle1.xpos, circle1.ypos, circle2.xpos, circle2.ypos);
+                    var tempv2y = circle1.updatev2y(circle1.mass, circle2.mass, circle1.xvel, circle1.yvel, circle2.xvel, circle2.yvel, circle1.xpos, circle1.ypos, circle2.xpos, circle2.ypos);
+
+                    circle1.xvel = tempv1x;
+                    circle1.yvel = tempv1y;
+                    circle2.xvel = tempv2x;
+                    circle2.yvel = tempv2y;
+                }
+
+                updateCollisionWithWall() {
+                    if(this.xpos + this.radius + this.xvel >= canvas.width || this.xpos - this.radius + this.xvel < 0) {
+                        this.xvel = -this.xvel;
+                    }
+                    if(this.ypos + this.radius + this.yvel > canvas.height || this.ypos - this.radius + this.yvel < 0) {
+                        this.yvel = -this.yvel;
+                    }
+
+                    if(this.index < circles1.length) {
+                        if(this.xpos < halfWidth && this.xpos + this.radius + this.xvel >= halfWidth) {
+                            this.xvel = -this.xvel;
+                        }
+                        else if(this.xpos > halfWidth && this.xpos - this.radius + this.xvel <= halfWidth) {
+                            this.xvel = -this.xvel;
+                        }
+                    }
+                }
+
+                willCollide(circle1, circle2) { //willCollide() checks if circle1 and circle2 will collide in the next time step
+                    if(Math.sqrt(Math.pow(circle1.xpos + circle1.xvel - (circle2.xpos + circle2.xvel), 2) + Math.pow(circle1.ypos + circle1.yvel - (circle2.ypos + circle2.yvel), 2)) < (circle1.radius + circle2.radius)) {
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                willChainCollide(circle1, circle2) { //willChainCollide() checks if circle1 will collide with OTHER circles after it has collided with circle2
+                    for(var i = 0; i < circles.length; i++) {
+                        if(circle1.index != i && circle2.index != i) {
+                            if(circle1.willCollide(circle1, circles[i]) && chain1 < 20) {
+                                chain1++;
+                                circle1.updateCollisionWithObj();
+                            }
+                            if(circle2.willCollide(circle2, circles[i]) && chain2 < 20) {
+                                chain2++;
+                                circle2.updateCollisionWithObj();
+                            }
+                        }
+                    }
+                }
+
+                isCollided(circle1, circle2) { //isCollided() checks if circle1 and circle2 are collided in the current time step
+                    if(Math.sqrt(Math.pow(circle1.xpos - circle2.xpos, 2) + Math.pow(circle1.ypos - circle2.ypos, 2)) < circle1.radius + circle2.radius) {
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                updateUntilCollided(circle1, circle2) { //updateUntilCollided() accurately updates the positions of two circles that WILL collide right before they really DO collide
+                    if(!this.isCollided(circle1, circle2)) { //this is necessary because, although very, very rarely, circles can get stuck with each other and overlap
+                        var xpos1 = circle1.xpos;
+                        var ypos1 = circle1.ypos;
+                        var xpos2 = circle2.xpos;
+                        var ypos2 = circle2.ypos;
+                        var r1 = circle1.radius;
+                        var r2 = circle2.radius;
+                        var xRatio = circle1.xvel / circle2.xvel;
+                        var yRatio = circle1.yvel / circle2.yvel;
+                        var vel1Ratio = circle1.xvel / circle1.yvel;
+                        var vel2Ratio = circle2.xvel / circle2.yvel;
+                        
+                        var a = Math.pow(vel2Ratio, 2) * Math.pow(xRatio - 1, 2) + Math.pow(yRatio - 1, 2);
+                        var b = 2 * (ypos1 - ypos2) * (yRatio - 1) + 2 * (xpos1 - xpos2) * (vel2Ratio) * (xRatio - 1);
+                        var c = Math.pow(xpos1 - xpos2, 2) + Math.pow(ypos1 - ypos2, 2) - Math.pow(r1 + r2, 2);
+
+                        var v2y = (-b - Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
+                        var v2x = v2y * vel2Ratio;
+                        var v1y = v2y * yRatio;
+                        var v1x = v1y * vel1Ratio;
+
+                        if(Math.pow(circle1.xvel + circle1.yvel, 2) < Math.pow(v1x + v1y, 2)) {
+                            v2y = (-b + Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
+                            v2x = v2y * vel2Ratio;
+                            v1y = v2y * yRatio;
+                            v1x = v1y * vel1Ratio;
+                        }
+
+                        circle1.xpos += v1x;
+                        circle1.ypos += v1y;
+                        circle2.xpos += v2x;
+                        circle2.ypos += v2y;
+                    }
+                }
+
+                updateCollisionWithObj() { //updateCollisionWithObj() calls the updateUntilCollided(), updateVelocities(), and willChainCollide() functions in the event of a collision
+                    for(var j = 0; j < circles.length; j++) {
+                        if(this.index != j) {
+                            if(this.willCollide(this, circles[j])) {
+                                if((this.xvel - circles[j].xvel) * (this.xpos - circles[j].xpos) + (this.yvel - circles[j].yvel) * (this.ypos - circles[j].ypos) < 0) {
+                                    this.updateUntilCollided(this, circles[j]);
+                                    this.updateVelocities(this, circles[j]);
+                                    this.willChainCollide(this, circles[j]);
+                                    
+                                }
+                            }
+                        }
+                    }
+                }
+
+                updatePosition() { //updatePosition() adds the circle's velocity to its position
+                    this.xpos += this.xvel;
+                    this.ypos += this.yvel;
+                    
+                    chain1 = 0;
+                    chain2 = 0;
+                }
+            }
+
+            function createCircles() {
+                circles = [];
+                circles1 = [];
+                circles2 = [];
+
+                const numCircle1 = parseInt(LeftCircle1Slider.value) + parseInt(RightCircle1Slider.value);
+                const numCircle2 = parseInt(LeftCircle2Slider.value) + parseInt(RightCircle2Slider.value);
+                var a = 0;
+                var b = 0;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.beginPath();
+                    ctx.save();
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 10]);
+                    ctx.moveTo(halfWidth, 0);
+                    ctx.lineTo(halfWidth, canvas.height);
+                    ctx.closePath();
+                    ctx.strokeStyle = "#000000";
+                    ctx.stroke();
+                    ctx.restore();
+
+                while(circles1.length < numCircle1) {
+                    var radius = 12; 
+                    var mass = Math.pow(radius, 3) / 1000; 
+                    var x = Math.random() * (canvas.width - 2 * radius) + radius;
+                    var y = Math.random() * (canvas.height - 2 * radius) + radius;
+                    var dx = (Math.random() * 1 - 0.5);
+                    var dy = (Math.random() * 1 - 0.5);
+                    var color = "#eb8149";
+                    var overlapping = false;
+
+                    for(var i = 0; i < circles1.length; i++) {
+                        if(!(a == i)) {
+                            if(Math.sqrt(Math.pow(circles1[i].xpos - x, 2) + Math.pow(circles1[i].ypos - y, 2)) < circles1[i].radius + radius) {
+                                overlapping = true;
+                            }
+                        }
+                    }
+
+                    if(isOverlappingWithMembrane(x, radius)) {
+                        overlapping = true;
+                    }
+
+                    if(a < LeftCircle1Slider.value) {
+                        if(!overlapping && x + radius < halfWidth) {
+                            circles1[a] = new Circle(x, y, mass, radius, color, dx, dy, a);
+                            circles1[a].draw(ctx);
+                            a++;
+                        }
+                    }
+                    else {
+                        if(!overlapping && x - radius > halfWidth) {
+                            circles1[a] = new Circle(x, y, mass, radius, color, dx, dy, a);
+                            circles1[a].draw(ctx);
+                            a++;
+                        }
+                    }
+                }
+
+                while(circles2.length < numCircle2) {
+                    var radius = 6; 
+                    var mass = Math.pow(radius, 3) / 1000;
+                    var x = Math.random() * (canvas.width - 2 * radius) + radius;
+                    var y = Math.random() * (canvas.height - 2 * radius) + radius;
+                    var dx = (Math.random() * 2 - 1);
+                    var dy = (Math.random() * 2 - 1);
+                    var color = "#06254d";
+                    var overlapping = false;
+
+                    for(var i = 0; i < circles1.length; i++) {
+                        if(Math.sqrt(Math.pow(circles1[i].xpos - x, 2) + Math.pow(circles1[i].ypos - y, 2)) < circles1[i].radius + radius) {
+                            overlapping = true;
+                        }
+                    }
+
+                    for(var i = 0; i < circles2.length; i++) {
+                        if(!(b == i)) {
+                            if(Math.sqrt(Math.pow(circles2[i].xpos - x, 2) + Math.pow(circles2[i].ypos - y, 2)) < circles2[i].radius + radius) {
+                                overlapping = true;
+                            }
+                        }
+                    }
+
+                    if(isOverlappingWithMembrane(x, radius)) {
+                        overlapping = true;
+                    }
+
+                    if(b < LeftCircle2Slider.value) {
+                        if(!overlapping && x + radius < halfWidth) {
+                            circles2[b] = new Circle(x, y, mass, radius, color, dx, dy, a + b);
+                            circles2[b].draw(ctx);
+                            b++;
+                        }
+                    }
+                    else {
+                        if(!overlapping && x - radius > halfWidth) {
+                            circles2[b] = new Circle(x, y, mass, radius, color, dx, dy, a + b);
+                            circles2[b].draw(ctx);
+                            b++;
+                        }
+                    }
+                }
+
+                circles.push(...circles1, ...circles2);
+                countConcentration();
+            }
+
+            function isOverlappingWithMembrane(x, radius) {
+                if(x < halfWidth) {
+                    if(x + radius > halfWidth) {
+                        return true;
+                    }
+                }
+                else if(x > halfWidth) {
+                    if(x - radius < halfWidth) {
+                        return true;
+                    }
+                }
+            }
+
+            function updateCircles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height); //clears the canvas for new circles
+                ctx.beginPath();
+                ctx.save();
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 10]);
+                ctx.moveTo(halfWidth, 0);
+                ctx.lineTo(halfWidth, canvas.height);
+                ctx.closePath();
+                ctx.strokeStyle = "#000000";
+                ctx.stroke();
+                ctx.restore();
+
+                for(var i = 0; i < circles.length; i++) { //calculates and draws the positions for new circles
+                    circles[i].updateCollisionWithWall();
+                    circles[i].updateCollisionWithObj();
+                    circles[i].updateCollisionWithWall();
+                    circles[i].updatePosition();
+                    circles[i].draw(ctx);
+                }
+
+                countConcentration();
+
+                if(start) {
+                    requestAnimationFrame(updateCircles);
+                }
+            }
+
+            function countConcentration() {
+                let soluteLcount = 0;
+                let solventLcount = 0;
+                let soluteRcount = 0;
+                let solventRcount = 0;
+
+                //circle2[] contains the smaller circles, which I call the solvent
+                for(var i = 0; i < circles2.length; i++) {
+                    if(circles2[i].xpos < halfWidth) {
+                        solventLcount++;
+                    }
+                    else if(circles2[i].xpos > halfWidth) {
+                        solventRcount++;
+                    }
+                }
+
+                //circle1[] contains the bigger circles, which I call the solute
+                for(var i = 0; i < circles1.length; i++) {
+                    if(circles1[i].xpos < halfWidth) {
+                        soluteLcount++;
+                    }
+                    else if(circles1[i].xpos > halfWidth) {
+                        soluteRcount++;
+                    }
+                }
+
+                concentrationL = (soluteLcount / solventLcount).toFixed(4);
+                concentrationR = (soluteRcount / solventRcount).toFixed(4);
+                
+                ctx.fillText("Concentration: " + concentrationL, 10, 25);
+                ctx.fillText("Concentration: " + concentrationR, halfWidth + 10, 25);
+                
+            }
+
+            LeftCircle1Slider.onchange = function() {
+                createCircles();
+            }
+
+            RightCircle1Slider.onchange = function() {
+                createCircles();
+            }
+
+            LeftCircle2Slider.onchange = function() {
+                createCircles();
+            }
+
+            RightCircle2Slider.onchange = function() {
+                createCircles();
+            }
+
+            
+
+            createCircles(); //on load, draw circles so the canvas is not blank
+        </script>
+
+        <script> //script for updating graph
+            var data1 = [];
+            var data2 = [];
+
+            var chart = new CanvasJS.Chart('chart-container', {
+                theme: 'light2',
+                title: {
+                    text: 'Concentration of Left vs. Right'
+                },
+                axisX: {
+                    title: 'Time (s)'
+                },
+                axisY: {
+                    title: 'Concentration'
+                },
+                data: [
+                    {
+                        type: 'line',
+                        dataPoints: data1,
+                        name: 'Concentration of left side',
+                        showInLegend: true
+                    },
+                    {
+                        type: 'line',
+                        dataPoints: data2,
+                        name: 'Concentration of right side',
+                        showInLegend: true
+                    }
+                ]
+            });
+
+            var xval = 0;
+            var yval = 0;
+            var dataMaxLength = 50;
+
+            function updateData() {
+                if(start) {
+                    yval = parseFloat(concentrationL);
+                    data1.push({
+                        x: xval,
+                        y: yval
+                    })
+
+                    yval = parseFloat(concentrationR);
+                    data2.push({
+                        x: xval,
+                        y: yval
+                    })
+
+                    xval += 0.1;
+
+                    if(data1.length > dataMaxLength) {
+                        data1.shift();
+                        data2.shift();
+                    }
+
+                    chart.render();
+                }
+            };
+
+            startButton.onclick = function() {
+                var interval = null;
+                start = !start;
+
+                if(start) {
+                    startButton.innerText = "Pause";
+                    updateData();
+                    interval = setInterval(updateData, 100);
+                }
+                else {
+                    startButton.innerText = "Start";
+                    clearInterval(interval);
+                }
+
+                updateCircles();
+            }
+        </script>    
+
+        <style> /** Styling **/
+            @import url("https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto&display=swap");
+
+            #canvas {
+                background: radial-gradient(#f3f3f3, #f9fbff);
+                border-radius: 2px;
+                border: 3px solid #333333;
+            }
+
+            .controls-container {
+                max-width: 600px;
+                padding-bottom: 15px;
+                margin: 10px 0px 10px 2px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-bottom: solid 1px black;
+            }
+
+            input[type="range"] {
+                -webkit-appearance: none;
+                height: 8px;
+                width: 175px;
+                margin: 10px 0;
+                background: linear-gradient(#c4c0b3, #ebe5d5);
+                border-radius: 3px;
+            }
+
+            input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                height: 18px;
+                width: 18px;
+                background-color: #f16012;
+                border-radius: 50%;
+                transition: 0.2s ease;
+            }
+
+            input[type="range"]::-webkit-slider-thumb:hover {
+                -webkit-appearance: none;
+                height: 24px;
+                width: 24px;
+                background-color: #f17b3b;
+                cursor: pointer;
+                transition: 0.2s ease;
+            }
+
+            input[type="range"]::-webkit-slider-thumb:active {
+                background-color: #ca4f0c;
+                cursor: pointer;
+            }
+
+            #graph {
+                border: solid 1px black;
+            }
+
+            label {
+                font-family: "Open Sans", sans-serif;
+            }
+
+            .sliders-container {
+                max-width: 600px;
+                max-height: fit-content;
+                display: flex;
+            }
+
+            #start-button {
+                height: 80px;
+                width: 120px;
+                margin: 0px auto;
+                background-color: #db5812;
+                font-family: "Roboto", sans-serif;
+                font-size: 24px;
+                color: white;
+                border-radius: 3px;
+                border: none;
+                cursor: pointer;
+                transition: 0.2s ease;
+            }
+
+            #start-button:hover {
+                background-color: #ec8249;
+                cursor: pointer;
+                transition: 0.2s ease;
+            }
+
+            #start-button:active {
+                background-color: #bb4303;
+                transition: 0.1s ease;
+            }
+        </style>
+    </body>
+</html>
