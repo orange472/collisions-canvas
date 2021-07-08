@@ -1,2 +1,2 @@
-# collision
-Simulation for 2-D molecule/circle collisions
+# Collision Simulation
+All code is on one document for ease of implementation into a WordPress website. <br/>
