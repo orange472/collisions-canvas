@@ -164,13 +164,20 @@
                     if(this.ypos + this.radius + this.yvel > canvas.height || this.ypos - this.radius + this.yvel < 0) {
                         this.yvel = -this.yvel;
                     }
+                    else {
+                        this.yvel += 9.8 * 0.0005;
+                    }
 
-                    if(this.index < circles1.length) {
+                    if((this.xpos < halfWidth && this.xpos + this.radius < halfWidth) || (this.xpos > halfWidth && this.xpos - this.radius > halfWidth)) {
                         if(this.xpos < halfWidth && this.xpos + this.radius + this.xvel >= halfWidth) {
-                            this.xvel = -this.xvel;
+                            if(this.index < circles1.length || Math.random(1) < 0.25) {
+                                this.xvel = -this.xvel;
+                            }
                         }
                         else if(this.xpos > halfWidth && this.xpos - this.radius + this.xvel <= halfWidth) {
-                            this.xvel = -this.xvel;
+                            if(this.index < circles1.length || Math.random(1) < 0.25) {
+                                this.xvel = -this.xvel;
+                            }
                         }
                     }
                 }
@@ -266,6 +273,13 @@
                 }
             }
 
+            function randn_bm() {
+                var u = 0, v = 0;
+                while(u === 0) u = Math.random(); //Converting [0,1) to (0,1)
+                while(v === 0) v = Math.random();
+                return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+            }
+
             function createCircles() {
                 circles = [];
                 circles1 = [];
@@ -289,12 +303,15 @@
                     ctx.restore();
 
                 while(circles1.length < numCircle1) {
-                    var radius = 12; 
+                    let magnitude = randn_bm();
+                    let direction = Math.random() * 2 * Math.PI;
+
+                    var radius = 16; 
                     var mass = Math.pow(radius, 3) / 1000; 
                     var x = Math.random() * (canvas.width - 2 * radius) + radius;
                     var y = Math.random() * (canvas.height - 2 * radius) + radius;
-                    var dx = (Math.random() * 1 - 0.5);
-                    var dy = (Math.random() * 1 - 0.5);
+                    var dx = magnitude * Math.cos(direction);
+                    var dy = magnitude * Math.sin(direction);
                     var color = "#eb8149";
                     var overlapping = false;
 
@@ -327,12 +344,15 @@
                 }
 
                 while(circles2.length < numCircle2) {
-                    var radius = 6; 
+                    let magnitude = randn_bm();
+                    let direction = Math.random() * 2 * Math.PI;
+
+                    var radius = 8; 
                     var mass = Math.pow(radius, 3) / 1000;
                     var x = Math.random() * (canvas.width - 2 * radius) + radius;
                     var y = Math.random() * (canvas.height - 2 * radius) + radius;
-                    var dx = (Math.random() * 2 - 1);
-                    var dy = (Math.random() * 2 - 1);
+                    var dx = magnitude * Math.cos(direction);
+                    var dy = magnitude * Math.sin(direction);
                     var color = "#06254d";
                     var overlapping = false;
 
@@ -463,9 +483,7 @@
 
             RightCircle2Slider.onchange = function() {
                 createCircles();
-            }
-
-            
+            }       
 
             createCircles(); //on load, draw circles so the canvas is not blank
         </script>
@@ -519,7 +537,7 @@
                         y: yval
                     })
 
-                    xval += 0.1;
+                    xval += 1;
 
                     if(data1.length > dataMaxLength) {
                         data1.shift();
@@ -537,7 +555,7 @@
                 if(start) {
                     startButton.innerText = "Pause";
                     updateData();
-                    interval = setInterval(updateData, 100);
+                    interval = setInterval(updateData, 1000);
                 }
                 else {
                     startButton.innerText = "Start";
@@ -564,38 +582,37 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                border-bottom: solid 1px black;
             }
 
             input[type="range"] {
                 -webkit-appearance: none;
-                height: 8px;
+                height: 7px;
                 width: 175px;
                 margin: 10px 0;
-                background: linear-gradient(#c4c0b3, #ebe5d5);
+                background: linear-gradient(#d6d2c4, #ebe5d5);
                 border-radius: 3px;
             }
 
             input[type="range"]::-webkit-slider-thumb {
                 -webkit-appearance: none;
-                height: 18px;
-                width: 18px;
-                background-color: #f16012;
+                height: 16px;
+                width: 16px;
+                background: linear-gradient(#f15912, #f15912);
                 border-radius: 50%;
                 transition: 0.2s ease;
             }
 
             input[type="range"]::-webkit-slider-thumb:hover {
                 -webkit-appearance: none;
-                height: 24px;
-                width: 24px;
-                background-color: #f17b3b;
+                height: 21px;
+                width: 21px;
+                background: linear-gradient(#f17b3b, #f15912);
                 cursor: pointer;
                 transition: 0.2s ease;
             }
 
             input[type="range"]::-webkit-slider-thumb:active {
-                background-color: #ca4f0c;
+                background: linear-gradient(#f15912, #ca4f0c);
                 cursor: pointer;
             }
 
